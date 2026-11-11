@@ -1,54 +1,50 @@
-# Tokopaedi E-Commerce Performance Analysis: Sales, Channel Growth, Funnel Conversion & Onboarding | SQL (BigQuery)
+# Analisis Data Penjualan E-Commerce Tokopaedi | SQL (BigQuery)
 
-## Overview
+## Gambaran Proyek
 
-Dokumen ini menyajikan analisis performa bisnis dan perilaku pelanggan untuk **Tokopaedi** (*dummy dataset*), sebuah platform e-commerce multi-channel (Website, Mobile App/App Store/Play Store, dan Offline Store). <br>
+Proyek ini berisi latihan analisis data penjualan dari **Tokopaedi** (data dummy e-commerce). Di sini saya mencoba mengolah data transaksi dari beberapa channel (Website, Aplikasi, dan Offline Store) untuk melihat tren penjualan dan perilaku pembeli di tahun 2024.
 
-Metrik yang dievaluasi meliputi total pendapatan (*revenue*), volume penjualan produk per kategori, pertumbuhan *channel* bulanan (*MoM* & *YoY*), tingkat konversi *funnel* organik, hingga efektivitas *onboarding* pelanggan baru. <br>
+Ada 5 pertanyaan utama yang dijawab di proyek ini:
++ **Laporan Penjualan Bulanan:** Melihat total pendapatan per bulan selama tahun 2024.
++ **Tren Kategori Produk:** Menghitung jumlah barang yang terjual per kategori dari tahun 2020 sampai 2024 untuk bantu cek stok gudang.
++ **Performa Channel Penjualan:** Membandingkan jumlah order dan pendapatan di tiap channel pada tahun 2024, serta kenaikannya dibanding tahun 2023.
++ **Konversi Trafik Organik:** Menghitung berapa persen kunjungan organik yang berhasil jadi transaksi di masing-masing channel.
++ **Pelanggan Baru:** Melihat jumlah pendaftar baru tiap bulan dan rata-rata berapa hari sampai mereka belanja untuk pertama kalinya.
 
-Analisis ini bertujuan untuk menjawab 5 kebutuhan utama dari berbagai *stakeholders* perusahaan:
-+ **Board of Directors:** Mengevaluasi tren total pendapatan bulanan sepanjang tahun 2024.
-+ **Warehouse Manager:** Memetakan volume kuantitas produk terjual per kategori dari tahun 2020 hingga 2024 untuk perencanaan *restock*.
-+ **Marketing Manager:** Menganalisis performa pesanan dan pendapatan tiap *channel* di tahun 2024 serta pertumbuhan tahunannya terhadap 2023.
-+ **Marketing Manager:** Mengukur efektivitas trafik dan tingkat konversi (*conversion rate*) jalur organik di berbagai *channel*.
-+ **BI & CRM Lead:** Mengevaluasi akuisisi pelanggan baru per *channel* registrasi dan rata-rata waktu yang dibutuhkan hingga transaksi pertama (*time to first purchase*).
+Tools yang dipakai: **Google BigQuery (SQL)** untuk olah data, serta **Python** dan **Google Looker Studio** untuk membuat grafik. <br>
+File query SQL: [Tokopaedi_Analysis_SQL_Code.sql](sql/Tokopaedi_Analysis_SQL_Code.sql) <br>
+File presentasi: [FINPRO SQL.pdf](pdf/FINPRO%20SQL.pdf)
 
-Analisis data dilakukan menggunakan **Google BigQuery (SQL)** serta divisualisasikan menggunakan **Python** dan **Google Looker Studio**. <br>
-Kode SQL lengkap untuk analisis ini dapat diakses di sini: [Tokopaedi_Analysis_SQL_Code.sql](Tokopaedi_Analysis_SQL_Code.sql). <br>
-File presentasi lengkap dapat diunduh di sini: [FINPRO SQL.pptx](FINPRO%20SQL.pptx).
+## **Daftar Isi** <br>
+- [Data yang Digunakan](#data-yang-digunakan) <br>
+- [Hasil Analisis](#hasil-analisis)
+- [Kesimpulan Singkat](#kesimpulan-singkat)
+- [Saran](#saran)
 
-## **Table of Contents** <br>
-- [Dataset](#dataset) <br>
-- [Analysis](#analysis)
-- [Executive Summary](#executive-summary)
-- [Recommendations](#recommendations)
-- [Limitations](#limitations)
+## Data yang Digunakan
 
-## Dataset
+Data yang dipakai terdiri dari 6 tabel:
+1. **`order_detail`**: Data detail pesanan seperti tanggal order, jumlah barang, harga, dan diskon.
+2. **`product_detail`**: Data informasi produk dan kategorinya.
+3. **`customer_detail`**: Data pelanggan dan tanggal mereka daftar.
+4. **`transaction_detail`**: Data rincian pembayaran (total bayar setelah pajak dan ongkir).
+5. **`payment_detail`**: Daftar metode pembayaran.
+6. **`funnel_detail`**: Data riwayat kunjungan user di aplikasi atau website.
 
-Dataset yang digunakan berasal dari database internal **Tokopaedi** yang terdiri dari 6 tabel utama yang saling terhubung (*relational database*):
-1. **`order_detail`**: Menyimpan rincian pesanan pelanggan (`order_id`, `transaction_id`, `order_date`, `customer_id`, `channel_type`, `sku_id`, `quantity`, `price`, `before_discount`, `discount_item`, `after_discount`, `is_gross`, `is_valid`, `is_net`).
-2. **`product_detail`**: Menyimpan informasi produk (`sku_id`, `category`, `brand`, `product`, `variant`, `sku_name`, `price`, `cogs`).
-3. **`customer_detail`**: Menyimpan profil dan histori registrasi pelanggan (`customer_id`, `registration_date`, `customer_name`, `customer_type`, `dob`, `province`, `registration_channel`).
-4. **`transaction_detail`**: Menyimpan rincian pembayaran transaksi (`transaction_id`, `transaction_date`, `customer_id`, `payment_method`, `before_tax`, `tax`, `after_tax`, `shipping_cost`, `transaction_discount`, `total_paid`).
-5. **`payment_detail`**: Menyimpan referensi metode pembayaran (`id`, `payment_method`).
-6. **`funnel_detail`**: Menyimpan aktivitas *funnel* dan trafik pengguna (`funnel_id`, `channel_source`, `customer_id`, `sku_id`, `funnel_date`, `status`, `event`, `order_id`).
-
-Berikut adalah skema hubungan antar tabel (*Entity Relationship Diagram*) pada database Tokopaedi:
+Skema hubungan antar tabelnya seperti ini:
 
 <a href="images/Scheme.jpg"><img src="images/Scheme.jpg" alt="ERD Tokopaedi" width="400"></a>
 
-Metrik dan atribut kunci yang digunakan dalam analisis ini meliputi:
-+ **`total_paid`**: Total biaya transaksi bersih yang dibayarkan pelanggan (termasuk pajak, ongkos kirim, dan dikurangi diskon transaksi).
-+ **`after_discount`**: Nilai pendapatan produk setelah dikurangi diskon item.
-+ **`is_valid`**: Indikator validitas pembayaran (`1` = pelanggan sudah melakukan pembayaran).
-+ **`event` & `channel_source`**: Sumber trafik pengguna (seperti jalur `Organic`) pada *Website*, *App Store*, dan *Play Store*.
-+ **`registration_date` & `order_date`**: Digunakan untuk menghitung *lead time* (selisih hari) sejak pelanggan mendaftar hingga melakukan pembelian pertama.
+Beberapa kolom penting yang sering dipakai di query:
++ **`total_paid`**: Total uang yang dibayar pembeli (sudah termasuk pajak, ongkir, dan potongan diskon).
++ **`after_discount`**: Harga produk setelah dikurangi diskon.
++ **`is_valid`**: Penanda apakah pesanan sudah dibayar (`1` = sudah bayar).
++ **`event` & `channel_source`**: Asal kunjungan user (misalnya dari pencarian `Organic`) di Website, App Store, atau Play Store.
 
-## Analysis
+## Hasil Analisis
 
-### 1. Laporan Pendapatan Bulanan 2024 (Request: Board of Directors)
-Langkah pertama adalah mengevaluasi tren pendapatan bulanan Tokopaedi sepanjang tahun 2024 berdasarkan nilai `total_paid` pada tabel `transaction_detail`.
+### 1. Laporan Pendapatan Bulanan 2024
+Pertama, saya menghitung total pendapatan per bulan selama tahun 2024 dari kolom `total_paid` di tabel `transaction_detail`.
 
 <table>
   <tr>
@@ -61,13 +57,13 @@ Langkah pertama adalah mengevaluasi tren pendapatan bulanan Tokopaedi sepanjang 
   </tr>
 </table>
 
-Secara keseluruhan, Tokopaedi menunjukkan performa penjualan yang positif sepanjang tahun 2024. Pertumbuhan *sales* sempat mencapai puncak di semester pertama pada bulan Mei (Rp2,72 miliar), kemudian melandai ke titik terendah pada bulan Juli (Rp1,10 miliar). <br>
-Memasuki kuartal IV (Oktober–Desember), terjadi lonjakan aktivitas belanja yang signifikan menjelang akhir tahun, di mana **Desember** mencatatkan rekor pendapatan tertinggi sepanjang tahun yakni mencapai **Rp4,11 miliar** (329 transaksi).
+Dari grafik terlihat penjualan tahun 2024 cukup naik turun. Di pertengahan tahun pertama sempat naik tinggi di bulan Mei (Rp2,72 miliar), tapi turun paling rendah di bulan Juli (Rp1,10 miliar). <br>
+Mulai bulan Oktober sampai Desember penjualan naik lagi, dan puncaknya ada di bulan **Desember** yang mencapai **Rp4,11 miliar** (329 transaksi).
 
 ---
 
-### 2. Tren Volume Penjualan per Kategori 2020–2024 (Request: Warehouse Manager)
-Untuk membantu perencanaan *restock* gudang, saya menggabungkan tabel `order_detail` dan `product_detail` untuk melihat tren kuantitas unit terjual (`is_valid = 1`) di 11 kategori produk selama 5 tahun terakhir.
+### 2. Tren Penjualan per Kategori 2020–2024
+Untuk melihat barang apa saja yang laku, saya menggabungkan tabel `order_detail` dan `product_detail` lalu menjumlahkan barang yang terjual (`is_valid = 1`) dari tahun 2020 sampai 2024.
 
 <table>
   <tr>
@@ -80,16 +76,15 @@ Untuk membantu perencanaan *restock* gudang, saya menggabungkan tabel `order_det
   </tr>
 </table>
 
-Dari hasil agregasi tahunan, terlihat pergeseran preferensi pelanggan yang menarik:
-+ **Puncak Historis vs Pemulihan 2024:** Tahun 2021 merupakan puncak penjualan bagi mayoritas kategori yang dipimpin oleh *Food & Beverage* (9.368 unit). Namun, tahun 2024 menunjukkan pemulihan yang sangat kuat pada beberapa lini.
-+ **Rekor Tertinggi Baru di 2024:** Kategori **Fashion & Footwear** (5.143 unit), **Books & Stationery** (3.389 unit), **Home Decor** (2.104 unit), dan **Kitchen Appliances** (1.419 unit) berhasil mencetak rekor volume penjualan tertinggi baru dalam 5 tahun terakhir pada 2024.
-+ **Tren Penurunan Konsisten:** Kategori **Toys & Games** mengalami penurunan volume penjualan tanpa henti selama 5 tahun berturut-turut, dari 3.519 unit (2020) merosot menjadi 1.987 unit (2024).
+Hasil yang didapat:
++ Penjualan paling ramai sebenarnya sempat terjadi di tahun 2021, terutama untuk kategori *Food & Beverage* (9.368 unit).
++ Di tahun 2024, ada 4 kategori yang penjualannya naik tinggi dan mencetak rekor baru, yaitu **Fashion & Footwear** (5.143 unit), **Books & Stationery** (3.389 unit), **Home Decor** (2.104 unit), dan **Kitchen Appliances** (1.419 unit).
++ Sebaliknya, kategori **Toys & Games** terus turun tiap tahun, dari 3.519 unit di 2020 menjadi 1.987 unit di 2024.
 
 ---
 
-### 3. Analisis Performa & Pertumbuhan Channel 2024 vs 2023 (Request: Marketing Manager)
-Selanjutnya, saya menganalisis kontribusi pesanan unik (`COUNT(DISTINCT order_id)`) dan pendapatan (`SUM(after_discount)`) dari tiga *channel* penjualan utama (*Website*, *App Store*, dan *Offline Store*) sepanjang 2024, serta membandingkan pertumbuhan pendapatan tiap bulannya terhadap tahun 2023.
-
+### 3. Performa Channel Penjualan 2024 vs 2023
+Di bagian ini saya mengecek jumlah pesanan (`COUNT(DISTINCT order_id)`) dan pendapatan (`SUM(after_discount)`) dari *Website*, *App Store*, dan *Offline Store* di tahun 2024, lalu membandingkan total pendapatannya per bulan dengan tahun 2023.
 
 <table>
   <tr>
@@ -102,13 +97,13 @@ Selanjutnya, saya menganalisis kontribusi pesanan unik (`COUNT(DISTINCT order_id
   </tr>
 </table>
 
-+ **Perbandingan Antar Channel (2024):** **Offline Store** mencatatkan total *order* paling sedikit (1.037 *orders*), tetapi justru menghasilkan *revenue* tertinggi (**Rp5,9 miliar**)—menandakan *Average Order Value (AOV)* yang jauh lebih besar dibanding *channel* lain, terutama didorong lonjakan di November (Rp909 juta) dan Desember (Rp1,54 miliar). Sebaliknya, **Website** unggul dari sisi volume pesanan tertinggi (1.182 *orders*), namun menghasilkan *revenue* Rp4,78 miliar yang mengindikasikan nilai per transaksi yang lebih kecil. **App Store** menjadi *channel* paling fluktuatif, sempat turun tajam di Februari (47 *orders*) dan Juli (55 *orders*) sebelum kembali menguat di akhir tahun.
-+ **Pertumbuhan Terhadap 2023 (YoY per Bulan):** Dibandingkan bulan yang sama pada tahun 2023, pendapatan keseluruhan tahun 2024 tumbuh sangat pesat pada Februari (+108,83%), Desember (+99,76%), Januari (+88,91%), November (+86,41%), dan Mei (+72,49%). Namun, sempat terjadi kontraksi pada bulan Agustus (-54,09%) dan Maret (-38,50%).
++ **Perbandingan Channel (2024):** **Offline Store** punya jumlah order paling sedikit (1.037 order), tapi pendapatannya paling besar (**Rp5,9 miliar**). Ini kemungkinan karena orang yang belanja langsung di toko membeli barang dengan harga lebih mahal atau jumlah lebih banyak sekaligus, terutama di bulan November dan Desember. Sementara itu, **Website** paling sering dipakai belanja (1.182 order) tapi total pendapatannya Rp4,78 miliar.
++ **Perbandingan 2024 vs 2023:** Kalau dibandingkan bulan yang sama di 2023, pendapatan tahun 2024 naik cukup tinggi di bulan Februari (+108,83%), Desember (+99,76%), Januari (+88,91%), dan November (+86,41%). Tapi sempat minus di bulan Agustus (-54,09%) dan Maret (-38,50%).
 
 ---
 
-### 4. Analisis Funnel Conversion — Event Organic 2024 (Request: Marketing Manager)
-Untuk memetakan efektivitas trafik organik sepanjang tahun 2024, saya menghitung total *event* organik, jumlah pesanan unik yang terkonversi, serta *conversion rate* pada masing-masing `channel_source`.
+### 4. Konversi Trafik Organik 2024
+Bagian ini melihat seberapa banyak kunjungan organik (`event = 'Organic'`) yang akhirnya beneran checkout menjadi pesanan di masing-masing channel.
 
 <table>
   <tr>
@@ -121,13 +116,13 @@ Untuk memetakan efektivitas trafik organik sepanjang tahun 2024, saya menghitung
   </tr>
 </table>
 
-+ **Dominasi Trafik vs Efisiensi Konversi:** Dari sisi volume trafik organik, **Website** mendominasi dengan **29.062 *events*** (627 *orders*), disusul **App Store** dengan **27.717 *events*** (611 *orders*), dan **Play Store** dengan **26.165 *events*** (579 *orders*).
-+ Namun, pola ini berbalik saat dilihat dari efisiensi konversi (*conversion rate*): **Play Store** justru menjadi yang paling efisien (**2,21%**) meskipun trafiknya paling kecil, diikuti **App Store** (**2,20%**), sedangkan **Website** yang memiliki trafik terbesar justru mencatatkan *conversion rate* paling rendah (**2,16%**).
++ **Kunjungan vs Persentase Belanja:** Kunjungan organik paling banyak ada di **Website** (**29.062 kunjungan**, 627 order), lalu **App Store** (**27.717 kunjungan**, 611 order), dan **Play Store** (**26.165 kunjungan**, 579 order).
++ Walaupun pengunjungnya paling sedikit, persentase konversi di **Play Store** sedikit lebih tinggi (**2,21%**), disusul **App Store** (**2,20%**), dan **Website** (**2,16%**).
 
 ---
 
-### 5. Akuisisi Pelanggan Baru & Rata-rata Waktu ke Pembelian Pertama 2024 (Request: BI & CRM Lead)
-Tahap terakhir adalah mengevaluasi proses *onboarding* pelanggan baru sepanjang 2024 dengan membandingkan total pendaftar baru secara keseluruhan (Case 5.1) terhadap pendaftar baru yang benar-benar melakukan minimal satu transaksi valid beserta rata-rata durasi hari menuju transaksi pertamanya (Case 5.2).
+### 5. Pelanggan Baru & Waktu Pertama Kali Belanja 2024
+Terakhir, saya menghitung jumlah pengguna yang baru daftar di tahun 2024, lalu mengecek berapa orang yang sudah pernah belanja (`is_valid = 1`) dan rata-rata selisih hari dari tanggal daftar sampai tanggal belanja pertama.
 
 <table>
   <tr>
@@ -139,40 +134,23 @@ Tahap terakhir adalah mengevaluasi proses *onboarding* pelanggan baru sepanjang 
     </td>
   </tr>
 </table>
-+ **Tren Akuisisi Pelanggan Baru:** Volume registrasi pelanggan baru di ketiga *channel* (*Mobile App*, *Website*, *Offline Store*) mengalami tren penurunan dari awal hingga akhir tahun 2024. *Mobile App* sempat mendominasi di bulan Januari (15 pelanggan baru) dan *rebound* di Agustus, namun melemah drastis menjelang akhir tahun. *Website* cenderung lebih stabil di kuartal awal (7–10 pelanggan/bulan).
-+ **Gap Aktivasi & Durasi ke Pembelian Pertama:** Ketika difilter khusus pelanggan yang sudah bertransaksi (`is_valid = 1`), terlihat bahwa sebagian pendaftar belum pernah melakukan *checkout* (misalnya pada *Offline Store* di beberapa bulan akhir tahun). Selain itu, rata-rata waktu tunggu dari tanggal registrasi hingga transaksi pertama (`avg_days_to_first_order`) masih cukup panjang, berkisar antara **45 hingga 145 hari** tergantung bulan dan *channel* pendaftaran.
 
-## Executive Summary
++ **Tren Pendaftar Baru:** Jumlah pendaftar baru di *Mobile App*, *Website*, maupun *Offline Store* cenderung menurun dari awal tahun ke akhir tahun 2024. Paling banyak ada di bulan Januari lewat *Mobile App* (15 pelanggan baru).
++ **Jeda Waktu Belanja Pertama:** Ternyata tidak semua yang daftar langsung belanja. Untuk pelanggan yang sudah transaksi, rata-rata mereka baru melakukan pembelian pertama sekitar **45 sampai 145 hari** setelah daftar.
 
-+ **Kuatnya Momentum Peak Season Akhir Tahun:** Pendapatan Tokopaedi tahun 2024 sangat terdorong oleh performa kuartal IV, dengan puncak penjualan terjadi pada bulan Desember sebesar Rp4,11 miliar (+99,76% dibanding Desember 2023), sementara titik terendah berada di bulan Juli (Rp1,10 miliar).
-+ **Pergeseran Mesin Pertumbuhan Kategori Produk:** *Fashion & Footwear* (5.143 unit), *Books & Stationery* (3.389 unit), *Home Decor* (2.104 unit), dan *Kitchen Appliances* (1.419 unit) mencetak rekor volume tertinggi baru di 2024, sementara *Toys & Games* menyusut lima tahun berturut-turut.
-+ **Karakteristik Berbeda Tiap Channel Penjualan:** *Offline Store* unggul sebagai penghasil *revenue* tertinggi (Rp5,9 miliar) berkat nilai belanja per transaksi (AOV) yang besar, sedangkan *Website* menjadi penggerak frekuensi transaksi tertinggi (1.182 *orders*).
-+ **Peluang Optimasi Konversi Trafik Organik:** *Play Store* (2,21%) dan *App Store* (2,20%) lebih efisien dalam mengonversi trafik organik menjadi pesanan dibandingkan *Website* (2,16%) yang memiliki volume kunjungan tertinggi.
-+ **Tantangan Aktivasi Pengguna Baru:** Penurunan tren registrasi pelanggan baru sepanjang 2024 disertai jeda waktu yang cukup lama menuju transaksi pertama (rata-rata >45 hari) menunjukkan perlunya akselerasi pada tahap *onboarding*.
+## Kesimpulan Singkat
 
-## Recommendations
++ **Penjualan Akhir Tahun Tinggi:** Pendapatan terbesar terjadi di akhir tahun, khususnya bulan Desember (Rp4,11 miliar), sedangkan bulan Juli paling sepi (Rp1,10 miliar).
++ **Kategori yang Lagi Naik:** *Fashion & Footwear*, *Books & Stationery*, *Home Decor*, dan *Kitchen Appliances* laku keras di 2024, sementara *Toys & Games* terus menurun.
++ **Perbedaan Tiap Channel:** *Offline Store* menghasilkan uang paling banyak (Rp5,9 miliar), sedangkan *Website* punya jumlah transaksi paling sering (1.182 order).
++ **Konversi Aplikasi Sedikit Lebih Unggul:** Persentase pengunjung organik yang jadi belanja di *Play Store* (2,21%) dan *App Store* (2,20%) sedikit lebih tinggi daripada *Website* (2,16%).
++ **User Baru Lama Checkout:** Rata-rata pengguna baru butuh waktu lebih dari 45 hari sejak daftar sampai akhirnya belanja pertama kali.
 
-Rekomendasi strategis dikelompokkan ke dalam empat fokus utama berdasarkan temuan data:
+## Saran
 
-**1. Manajemen Inventaris & Kategori Produk (Warehouse)**
-+ **Prioritaskan Stok pada Kategori Growth & On-Fire:** Tingkatkan alokasi stok secara terukur pada kategori *Fashion & Footwear*, *Home Decor* (yang tumbuh lebih dari 2x lipat sejak 2022), *Books & Stationery*, dan *Kitchen Appliances* untuk mencegah *stockout*, terutama menjelang kuartal IV.
-+ **Gunakan Baseline 2024 untuk Kategori Volatil:** Untuk *Food & Beverage* dan *Beauty & Personal Care*, jaga ketersediaan stok dengan mengacu pada rata-rata permintaan tahun 2024, bukan lonjakan anomali tahun 2021.
-+ **Pangkas Restock Kategori Declining:** Kurangi volume *restock* secara tegas pada kategori *Toys & Games* agar tidak membebani biaya penyimpanan gudang, serta terapkan sistem stok stabil/berbasis pesanan untuk kategori *niche* (*Sports Equipment*, *Gaming Gear*, *Electronics*).
+Berdasarkan hasil di atas, beberapa hal sederhana yang bisa dilakukan:
 
-**2. Strategi Musiman & Cross-Channel (Sales & Marketing)**
-+ **Optimalkan Nilai Transaksi (AOV) di Website:** Mengingat *Website* memiliki jumlah pesanan tertinggi namun AOV lebih kecil dibanding *Offline Store*, terapkan strategi *product bundling*, *upselling*, atau batas minimum belanja (*minimum spend voucher*) untuk mendongkrak nilai keranjang belanja.
-+ **Intervensi Promo di Low Season (Mid-Year):** Hadirkan kampanye khusus pada bulan Juli dan Agustus (seperti *Mid-Year Sale* atau *Flash Sale* eksklusif aplikasi) untuk menahan penurunan pendapatan di pertengahan tahun dan menstabilkan fluktuasi di *App Store*.
-
-**3. Optimasi Funnel Organik (Marketing & Product)**
-+ **Perbaiki Checkout Flow di Website:** Evaluasi *user journey* dan kecepatan halaman *checkout* pada *Website*. Karena *Website* memiliki trafik organik terbesar (29.062 *events*), peningkatan kecil pada *conversion rate* akan berdampak signifikan terhadap total pesanan.
-+ **Dorong Akuisisi Trafik ke Mobile App (Play Store & App Store):** Mengingat aplikasi mobile terbukti memiliki tingkat konversi organik yang lebih tinggi, arahkan kampanye organik dan *deep-linking* ke dalam aplikasi untuk memaksimalkan ROI trafik.
-
-**4. Akuisisi & Onboarding Pelanggan Baru (BI & CRM)**
-+ **Akselerasi Pembelian Pertama (First-Order Incentive):** Untuk memangkas rata-rata waktu tunggu pembelian pertama (yang saat ini mencapai 45–90+ hari), berikan *Welcome Voucher* dengan batas waktu singkat (misalnya berlaku 7 hari setelah registrasi) disertai *automated reminder* (push notification/email) bagi pengguna baru yang belum melakukan *checkout*.
-+ **Reaktivasi Akuisisi Akhir Tahun:** Perkuat program *referral* dan insentif registrasi di *Mobile App* dan *Offline Store* pada paruh kedua tahun agar tren akuisisi pelanggan baru sejalan dengan lonjakan transaksi di kuartal IV.
-
-## Limitations
-
-Analisis ini memberikan gambaran komprehensif mengenai performa Tokopaedi, namun memiliki beberapa keterbatasan ruang lingkup:
-+ **Metrik Profitabilitas Per Channel & Kategori:** Analisis pendapatan per *channel* dan tren kategori saat ini berfokus pada *gross/net revenue* (`total_paid` dan `after_discount`) serta kuantitas unit terjual, belum membedah *net profit margin* setelah dikurangi `cogs` pada masing-masing *channel*.
-+ **Detail Tahapan Drop-off pada Funnel:** Data `funnel_detail` mengukur total *event* organik terhadap konversi akhir (`order_id`), namun belum merinci pada tahap spesifik mana (*view product*, *add to cart*, atau *payment page*) pengguna *Website* paling banyak batal melakukan transaksi.
++ **Stok Gudang:** Perbanyak stok untuk kategori yang sedang naik (*Fashion & Footwear*, *Home Decor*, *Books & Stationery*, dan *Kitchen Appliances*) terutama menjelang akhir tahun, dan kurangi stok *Toys & Games* karena peminatnya turun terus.
++ **Promo Pertengahan Tahun & Website:** Buat promo di bulan Juli–Agustus supaya penjualan tidak terlalu anjlok. Di *Website*, bisa dibuat promo paket (*bundling*) atau minimal belanja supaya nilai per transaksinya ikut naik seperti di *Offline Store*.
++ **Perbaikan Website:** Cek lagi tampilan atau proses pembayaran di *Website* supaya pengunjung organik yang jumlahnya banyak itu lebih mudah checkout.
++ **Voucher Pengguna Baru:** Berikan voucher diskon khusus pengguna baru dengan batas waktu singkat (misal berlaku 7 hari setelah daftar) supaya mereka langsung belanja dan tidak menunggu berbulan-bulan.
