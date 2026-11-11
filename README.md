@@ -13,7 +13,7 @@ Ada 5 pertanyaan utama yang dijawab di proyek ini:
 
 Tools yang dipakai: **Google BigQuery (SQL)** untuk olah data, serta **Python** dan **Google Looker Studio** untuk membuat grafik. <br>
 File query SQL: [Tokopaedi_Analysis_SQL_Code.sql](sql/Tokopaedi_Analysis_SQL_Code.sql) <br>
-File presentasi: [FINPRO SQL.pdf](pdf/FINPRO%20SQL.pdf)
+File presentasi: [FINPRO SQL.pdf](FINPRO%20SQL.pdf)
 
 ## **Daftar Isi** <br>
 - [Data yang Digunakan](#data-yang-digunakan) <br>
